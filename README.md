@@ -4,7 +4,8 @@ A small fullstack Student Management Dashboard built for the FlyNest Global PLC 
 
 Administrators can view, search, filter, sort, paginate, create, update, and delete students. The app includes a student details page, basic login, form validation, and toast notifications for feedback. Data is stored in PostgreSQL and exposed through Next.js API routes. Client state for the list, filters, and loading/error is managed with Redux Toolkit.
 
-**Repository:** https://github.com/HasnathAhmedTamim/student-management-dashboard
+**Repository:** https://github.com/HasnathAhmedTamim/student-management-dashboard  
+**Live Demo:** https://student-management-dashboard-inky-kappa.vercel.app/
 
 ## Tech Stack
 
@@ -113,6 +114,12 @@ npm run start
 | `npm run db:studio` | Open Prisma Studio |
 
 ## Live Demo / Deploy (Vercel)
+
+**Live app:** https://student-management-dashboard-inky-kappa.vercel.app/
+
+Demo login: `admin` / `admin123`
+
+To redeploy or deploy your own copy:
 
 1. Import the GitHub repository into [Vercel](https://vercel.com).
 2. Add environment variables: `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `AUTH_SECRET`.
