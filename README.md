@@ -1,36 +1,145 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Student Management Dashboard (EduAyna Assignment)
 
-## Getting Started
+A small fullstack Student Management Dashboard built for the FlyNest Global PLC / EduAyna junior fullstack evaluation.
 
-First, run the development server:
+Administrators can view, search, filter, create, update, and delete students. Data is stored in PostgreSQL (Neon) and exposed through Next.js API routes. Client state for the student list, filters, loading, and errors is managed with Redux Toolkit.
+
+## Tech Stack
+
+- **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS
+- **State:** Redux Toolkit
+- **Backend:** Next.js Route Handlers (`/api/students`)
+- **Database:** PostgreSQL + Prisma ORM
+- **Validation:** Zod (shared client/server rules)
+
+## Requirements
+
+- Node.js 18+ (recommended 20+)
+- npm
+- A PostgreSQL database (local or hosted, e.g. Neon)
+
+## Installation
+
+```bash
+npm install
+```
+
+## Environment Variables
+
+Copy the example file and set your database URL:
+
+```bash
+cp .env.example .env
+```
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/DATABASE?sslmode=require"
+```
+
+Do **not** commit real credentials. `.env` is gitignored.
+
+## Database Setup
+
+1. Ensure `DATABASE_URL` points to your PostgreSQL instance.
+2. Apply migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+3. (Optional) Seed sample students:
+
+```bash
+npm run db:seed
+```
+
+The schema creates a `students` table with:
+
+| Column     | Type                        |
+|------------|-----------------------------|
+| id         | UUID (PK)                   |
+| name       | text                        |
+| email      | text (unique)               |
+| phone      | text                        |
+| class      | text                        |
+| status     | enum `ACTIVE` / `INACTIVE`  |
+| created_at | timestamp                   |
+
+## Running the Application
+
+Development:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Production build:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm run start
+```
 
-## Learn More
+## Available Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start Next.js development server |
+| `npm run build` | Generate Prisma client and build the app |
+| `npm run start` | Start production server |
+| `npm run lint` | Run ESLint |
+| `npm run db:migrate` | Run Prisma migrations |
+| `npm run db:seed` | Seed sample students |
+| `npm run db:studio` | Open Prisma Studio |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Endpoints
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/students` | List students (`search`, `status`, `class` query params) |
+| `GET` | `/api/students/:id` | Get one student |
+| `POST` | `/api/students` | Create student (`201`) |
+| `PATCH` | `/api/students/:id` | Update student |
+| `DELETE` | `/api/students/:id` | Delete student |
 
-## Deploy on Vercel
+Status codes used: `200`, `201`, `400`, `404`, `500`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project Structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```text
+src/
+  app/
+    api/students/          # REST API route handlers
+    layout.tsx             # Root layout + Redux provider
+    page.tsx               # Dashboard page
+  components/students/     # UI: table, form, filters, states
+  lib/                     # Prisma client, Zod validation, helpers
+  store/                   # Redux store + students slice
+  types/                   # Shared TypeScript types
+prisma/
+  schema.prisma
+  migrations/
+  seed.ts
+```
+
+## Implementation Notes
+
+- **Redux** holds student list, loading/error/success, and filters/search.
+- **Local React state** is used for form fields, modal open/close, and field-level validation messages.
+- Search supports **name** and **email** (server-side) with a light debounce on the input.
+- Add and Edit share one reusable `StudentForm` component.
+- Delete requires confirmation before calling the API.
+- Loading, empty, and error states are handled so the UI never goes blank.
+
+## Short Explanation (Submission)
+
+1. **Most challenging part?** Wiring Prisma 7 with Neon (driver adapter + pool) while keeping the API and Redux flow simple and reliable.
+2. **Decision I’m most proud of?** Sharing Zod validation between the form and API so users and the server speak the same error language.
+3. **If I had another 4 hours?** Add pagination, sorting, and a dedicated student details page.
+4. **Before production?** Add authentication/authorization, stronger rate limiting and input sanitization, connection pooling tuned for serverless, automated tests, and rotate any exposed database credentials.
+
+## License
+
+Private assignment submission — not licensed for redistribution.
