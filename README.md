@@ -2,15 +2,18 @@
 
 A small fullstack Student Management Dashboard built for the FlyNest Global PLC / EduAyna junior fullstack evaluation.
 
-Administrators can view, search, filter, sort, paginate, create, update, and delete students. Includes a student details page and basic login. Data is stored in PostgreSQL and exposed through Next.js API routes. Client state is managed with Redux Toolkit.
+Administrators can view, search, filter, sort, paginate, create, update, and delete students. The app includes a student details page, basic login, form validation, and toast notifications for feedback. Data is stored in PostgreSQL and exposed through Next.js API routes. Client state for the list, filters, and loading/error is managed with Redux Toolkit.
+
+**Repository:** https://github.com/HasnathAhmedTamim/student-management-dashboard
 
 ## Tech Stack
 
 - **Frontend:** Next.js (App Router), React, TypeScript, Tailwind CSS
 - **State:** Redux Toolkit
-- **Backend:** Next.js Route Handlers (`/api/students`)
+- **Backend:** Next.js Route Handlers (`/api/students`, `/api/auth`)
 - **Database:** PostgreSQL + Prisma ORM
 - **Validation:** Zod (shared client/server rules)
+- **Notifications:** Sonner (toast popups)
 
 ## Requirements
 
@@ -38,6 +41,13 @@ ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin123"
 AUTH_SECRET="change-me-in-production"
 ```
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `ADMIN_USERNAME` | No | Login username (default: `admin`) |
+| `ADMIN_PASSWORD` | No | Login password (default: `admin123`) |
+| `AUTH_SECRET` | No | Session token secret (change in production) |
 
 Do **not** commit real credentials. `.env` is gitignored.
 
@@ -102,9 +112,16 @@ npm run start
 | `npm run db:seed` | Seed sample students |
 | `npm run db:studio` | Open Prisma Studio |
 
+## Live Demo / Deploy (Vercel)
+
+1. Import the GitHub repository into [Vercel](https://vercel.com).
+2. Add environment variables: `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `AUTH_SECRET`.
+3. Deploy.
+4. Ensure Prisma migrations are already applied to the database (`npx prisma migrate deploy` locally against the same `DATABASE_URL` if needed).
+
 ## API Documentation
 
-API behavior is documented here (no separate Swagger UI in the app).
+API behavior is documented in this README (no separate Swagger UI in the app).
 
 ### Auth
 
@@ -123,7 +140,7 @@ Login body:
 }
 ```
 
-Protected routes require a valid session cookie. Unauthenticated API calls return `401`.
+Protected routes require a valid session cookie. Unauthenticated API calls return `401`. Unauthenticated page visits redirect to `/login`.
 
 ### Students
 
@@ -177,13 +194,20 @@ Example list response:
 {
   "name": "Student Name",
   "email": "student@example.com",
-  "phone": "+8801XXXXXXXXX",
+  "phone": "+8801712345678",
   "class": "Grade 10",
   "status": "ACTIVE"
 }
 ```
 
-Validation errors return `400` with field messages. Duplicate email returns `400`. Missing student returns `404`.
+### Validation rules
+
+- **Name, email, phone, class, status:** required
+- **Email:** must be a valid email format
+- **Phone:** digits only (optional `+`, spaces, `-`, `()`), at least 8 digits
+- Validation errors return `400` with field messages
+- Duplicate email returns `400`
+- Missing student returns `404`
 
 ## Bonus Features
 
@@ -192,7 +216,8 @@ Validation errors return `400` with field messages. Duplicate email returns `400
 - Sorting by name, class, and created date
 - Student details page at `/students/:id`
 - Basic cookie-based admin authentication
-- API documentation documented in this README
+- API documentation in this README
+- Toast notifications (Sonner) for success/error feedback
 
 ## Project Structure
 
@@ -202,32 +227,48 @@ src/
     api/                   # REST API route handlers
     students/[id]/        # Student details page
     login/                 # Login page
-    middleware.ts          # Auth gate
+    layout.tsx
+    page.tsx
   components/
-    auth/
-    students/
-  lib/
-  store/
+    auth/                  # Login / logout
+    students/              # Table, form, filters, pagination
+    ui/                    # Shared UI (toaster)
+  lib/                     # Prisma, auth, validation helpers
+  store/                   # Redux store + students slice
   types/
+  middleware.ts            # Auth gate
 prisma/
+  schema.prisma
+  migrations/
+  seed.ts
 ```
 
-## Implementation Notes
+## Implementation Notes / Additional Notes
 
 - **Redux** holds student list, pagination meta, loading/error/success, filters, search, and sort.
 - **Local React state** is used for form fields, modal open/close, and field-level validation messages.
 - Search supports **name** and **email** (server-side) with debounce.
 - Add and Edit share one reusable `StudentForm` component.
 - Delete requires confirmation before calling the API.
+- Loading, empty, and error UI states are handled so the screen never goes blank.
+- Success/error action feedback uses **Sonner** toast popups.
 - Auth is intentionally simple for the assignment demo (not production-ready).
 - API docs are kept in the README instead of embedding Swagger UI in the app.
+- Nest.js was not used; Next.js API routes keep the project simple and meet the backend requirement.
 
 ## Short Explanation (Submission)
 
-1. **Most challenging part?** Combining pagination/sorting with Redux filters so list updates stay consistent after create/delete.
-2. **Decision I’m most proud of?** Sharing Zod validation between the form and API so users and the server speak the same error language.
-3. **If I had another 4 hours?** Add stronger auth (hashed passwords, roles), automated tests, and optional Swagger UI.
-4. **Before production?** Replace demo auth, rotate secrets, add rate limiting, automated tests, and harden database access for serverless.
+1. **What was the most challenging part of the assignment?**  
+   Combining pagination and sorting with Redux filters so the list stays consistent after create/delete, and wiring Prisma 7 with a hosted Postgres (Neon) connection.
+
+2. **What technical decision are you most proud of?**  
+   Sharing Zod validation between the form and API so the client and server use the same rules and error messages.
+
+3. **If you had another 4 hours, what would you improve?**  
+   Stronger auth (hashed passwords, roles), automated tests, and optional Swagger UI.
+
+4. **What part of the application would you change before deploying it to production?**  
+   Replace demo auth, rotate secrets, add rate limiting, add automated tests, and harden database access for serverless hosting.
 
 ## License
 
