@@ -17,7 +17,14 @@ export const studentInputSchema = z.object({
     .string()
     .trim()
     .min(1, "Phone is required.")
-    .max(30, "Phone must be 30 characters or fewer."),
+    .max(30, "Phone must be 30 characters or fewer.")
+    .regex(
+      /^\+?[0-9\s\-()]+$/,
+      "Please enter a valid phone number (digits only, optional + at the start).",
+    )
+    .refine((value) => value.replace(/\D/g, "").length >= 8, {
+      message: "Phone number must contain at least 8 digits.",
+    }),
   class: z
     .string()
     .trim()
