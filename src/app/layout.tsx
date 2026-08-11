@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Source_Sans_3 } from "next/font/google";
+import { AppToaster } from "@/components/ui/AppToaster";
 import { StoreProvider } from "@/store/provider";
 import "./globals.css";
 
@@ -31,6 +32,7 @@ export default function RootLayout({
       >
         <StoreProvider>
           <main className="min-h-screen">{children}</main>
+          <AppToaster />
         </StoreProvider>
       </body>
     </html>

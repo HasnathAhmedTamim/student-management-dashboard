@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { DeleteConfirmModal } from "@/components/students/DeleteConfirmModal";
 import { EmptyState } from "@/components/students/EmptyState";
@@ -10,7 +11,6 @@ import { Pagination } from "@/components/students/Pagination";
 import { StudentFiltersBar } from "@/components/students/StudentFilters";
 import { StudentForm } from "@/components/students/StudentForm";
 import { StudentTable } from "@/components/students/StudentTable";
-import { Toast } from "@/components/ui/Toast";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   clearMessages,
@@ -36,17 +36,36 @@ export function StudentsDashboard() {
     Record<string, string>
   >({});
 
+  const lastToastRef = useRef<string | null>(null);
+
   const loadStudents = useCallback(() => {
     void dispatch(fetchStudents());
-  }, [dispatch]);
-
-  const dismissToast = useCallback(() => {
-    dispatch(clearMessages());
   }, [dispatch]);
 
   useEffect(() => {
     loadStudents();
   }, [loadStudents]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const key = `success:${successMessage}`;
+      if (lastToastRef.current !== key) {
+        lastToastRef.current = key;
+        toast.success(successMessage);
+      }
+      dispatch(clearMessages());
+      return;
+    }
+
+    if (error && items.length > 0) {
+      const key = `error:${error}`;
+      if (lastToastRef.current !== key) {
+        lastToastRef.current = key;
+        toast.error(error);
+      }
+      dispatch(clearMessages());
+    }
+  }, [successMessage, error, items.length, dispatch]);
 
   function openCreate() {
     setSelectedStudent(null);
@@ -130,20 +149,8 @@ export function StudentsDashboard() {
   const showEmpty = !loading && !error && items.length === 0;
   const showLoadError = !loading && Boolean(error) && items.length === 0;
 
-  const toastOpen =
-    Boolean(successMessage) || (Boolean(error) && items.length > 0);
-  const toastMessage = successMessage || error || "";
-  const toastVariant = successMessage ? "success" : "error";
-
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-      <Toast
-        open={toastOpen}
-        message={toastMessage}
-        variant={toastVariant}
-        onClose={dismissToast}
-      />
-
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">

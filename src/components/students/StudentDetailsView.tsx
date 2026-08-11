@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { DeleteConfirmModal } from "@/components/students/DeleteConfirmModal";
 import { ErrorState } from "@/components/students/ErrorState";
 import { LoadingState } from "@/components/students/LoadingState";
 import { StudentForm } from "@/components/students/StudentForm";
-import { Toast } from "@/components/ui/Toast";
 import type { Student, StudentInput } from "@/types/student";
 
 export function StudentDetailsView() {
@@ -19,17 +19,11 @@ export function StudentDetailsView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [formServerErrors, setFormServerErrors] = useState<
     Record<string, string>
   >({});
-
-  const dismissToast = useCallback(() => {
-    setError(null);
-    setSuccessMessage(null);
-  }, []);
 
   async function loadStudent() {
     setLoading(true);
@@ -66,7 +60,6 @@ export function StudentDetailsView() {
   async function handleUpdate(values: StudentInput) {
     setSaving(true);
     setFormServerErrors({});
-    setSuccessMessage(null);
 
     try {
       const response = await fetch(`/api/students/${id}`, {
@@ -81,17 +74,16 @@ export function StudentDetailsView() {
         if (body?.details) {
           setFormServerErrors(body.details);
         }
-        setError(body?.message || "Unable to update student.");
+        toast.error(body?.message || "Unable to update student.");
         return false;
       }
 
       setStudent(body as Student);
       setEditing(false);
-      setSuccessMessage("Student updated successfully.");
-      setError(null);
+      toast.success("Student updated successfully.");
       return true;
     } catch {
-      setError("Unable to update student.");
+      toast.error("Unable to update student.");
       return false;
     } finally {
       setSaving(false);
@@ -104,13 +96,14 @@ export function StudentDetailsView() {
       const response = await fetch(`/api/students/${id}`, { method: "DELETE" });
       if (!response.ok) {
         const body = await response.json().catch(() => null);
-        setError(body?.message || "Unable to delete student.");
+        toast.error(body?.message || "Unable to delete student.");
         setConfirmDelete(false);
         return;
       }
+      toast.success("Student deleted successfully.");
       router.push("/");
     } catch {
-      setError("Unable to delete student.");
+      toast.error("Unable to delete student.");
       setConfirmDelete(false);
     } finally {
       setSaving(false);
@@ -141,19 +134,8 @@ export function StudentDetailsView() {
 
   if (!student) return null;
 
-  const toastOpen = Boolean(successMessage) || Boolean(error);
-  const toastMessage = successMessage || error || "";
-  const toastVariant = successMessage ? "success" : "error";
-
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Toast
-        open={toastOpen}
-        message={toastMessage}
-        variant={toastVariant}
-        onClose={dismissToast}
-      />
-
       <Link
         href="/"
         className="mb-6 inline-block text-sm font-medium text-teal-700 hover:underline"
@@ -178,7 +160,6 @@ export function StudentDetailsView() {
               onClick={() => {
                 setEditing((prev) => !prev);
                 setFormServerErrors({});
-                setError(null);
               }}
               className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
