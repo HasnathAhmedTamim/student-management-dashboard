@@ -69,6 +69,14 @@ export function StudentForm({
     });
   }
 
+  function fieldClass(hasError: boolean) {
+    return `w-full rounded-lg border px-3 py-2 text-slate-900 outline-none focus:ring-2 ${
+      hasError
+        ? "border-red-400 focus:border-red-500 focus:ring-red-100"
+        : "border-slate-300 focus:border-teal-600 focus:ring-teal-100"
+    }`;
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
 
@@ -96,7 +104,7 @@ export function StudentForm({
           name="name"
           value={values.name}
           onChange={(e) => updateField("name", e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className={fieldClass(Boolean(errors.name))}
           placeholder="Student full name"
         />
         {errors.name ? (
@@ -114,7 +122,7 @@ export function StudentForm({
           type="email"
           value={values.email}
           onChange={(e) => updateField("email", e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className={fieldClass(Boolean(errors.email))}
           placeholder="name@example.com"
         />
         {errors.email ? (
@@ -131,12 +139,16 @@ export function StudentForm({
           name="phone"
           value={values.phone}
           onChange={(e) => updateField("phone", e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
-          placeholder="+8801XXXXXXXXX"
+          className={fieldClass(Boolean(errors.phone))}
+          placeholder="+8801712345678"
         />
         {errors.phone ? (
           <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
-        ) : null}
+        ) : (
+          <p className="mt-1 text-xs text-slate-500">
+            Digits only. Country code (+) optional. Example: +8801712345678
+          </p>
+        )}
       </div>
 
       <div>
@@ -148,7 +160,7 @@ export function StudentForm({
           name="class"
           value={values.class}
           onChange={(e) => updateField("class", e.target.value)}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className={fieldClass(Boolean(errors.class))}
           placeholder="Grade 10"
         />
         {errors.class ? (
@@ -167,7 +179,7 @@ export function StudentForm({
           onChange={(e) =>
             updateField("status", e.target.value as StudentStatus)
           }
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className={fieldClass(Boolean(errors.status))}
         >
           <option value="ACTIVE">Active</option>
           <option value="INACTIVE">Inactive</option>

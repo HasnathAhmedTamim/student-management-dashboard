@@ -10,6 +10,7 @@ import { Pagination } from "@/components/students/Pagination";
 import { StudentFiltersBar } from "@/components/students/StudentFilters";
 import { StudentForm } from "@/components/students/StudentForm";
 import { StudentTable } from "@/components/students/StudentTable";
+import { Toast } from "@/components/ui/Toast";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   clearMessages,
@@ -39,17 +40,13 @@ export function StudentsDashboard() {
     void dispatch(fetchStudents());
   }, [dispatch]);
 
+  const dismissToast = useCallback(() => {
+    dispatch(clearMessages());
+  }, [dispatch]);
+
   useEffect(() => {
     loadStudents();
   }, [loadStudents]);
-
-  useEffect(() => {
-    if (!successMessage) return;
-    const timer = setTimeout(() => {
-      dispatch(clearMessages());
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [successMessage, dispatch]);
 
   function openCreate() {
     setSelectedStudent(null);
@@ -131,9 +128,22 @@ export function StudentsDashboard() {
 
   const showTable = !loading && !error && items.length > 0;
   const showEmpty = !loading && !error && items.length === 0;
+  const showLoadError = !loading && Boolean(error) && items.length === 0;
+
+  const toastOpen =
+    Boolean(successMessage) || (Boolean(error) && items.length > 0);
+  const toastMessage = successMessage || error || "";
+  const toastVariant = successMessage ? "success" : "error";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <Toast
+        open={toastOpen}
+        message={toastMessage}
+        variant={toastVariant}
+        onClose={dismissToast}
+      />
+
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-700">
@@ -159,25 +169,13 @@ export function StudentsDashboard() {
         </div>
       </header>
 
-      {successMessage ? (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {successMessage}
-        </div>
-      ) : null}
-
-      {error && !loading ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-      ) : null}
-
       <div className="mb-4">
         <StudentFiltersBar onFilterChange={loadStudents} />
       </div>
 
       {loading ? <LoadingState /> : null}
-      {!loading && error && items.length === 0 ? (
-        <ErrorState message={error} onRetry={loadStudents} />
+      {showLoadError ? (
+        <ErrorState message={error ?? undefined} onRetry={loadStudents} />
       ) : null}
       {showEmpty ? <EmptyState /> : null}
       {showTable ? (

@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { DeleteConfirmModal } from "@/components/students/DeleteConfirmModal";
 import { ErrorState } from "@/components/students/ErrorState";
 import { LoadingState } from "@/components/students/LoadingState";
 import { StudentForm } from "@/components/students/StudentForm";
+import { Toast } from "@/components/ui/Toast";
 import type { Student, StudentInput } from "@/types/student";
 
 export function StudentDetailsView() {
@@ -24,6 +25,11 @@ export function StudentDetailsView() {
   const [formServerErrors, setFormServerErrors] = useState<
     Record<string, string>
   >({});
+
+  const dismissToast = useCallback(() => {
+    setError(null);
+    setSuccessMessage(null);
+  }, []);
 
   async function loadStudent() {
     setLoading(true);
@@ -122,7 +128,10 @@ export function StudentDetailsView() {
   if (error && !student) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <Link href="/" className="mb-4 inline-block text-sm text-teal-700 hover:underline">
+        <Link
+          href="/"
+          className="mb-4 inline-block text-sm text-teal-700 hover:underline"
+        >
           ← Back to students
         </Link>
         <ErrorState message={error} onRetry={loadStudent} />
@@ -132,23 +141,25 @@ export function StudentDetailsView() {
 
   if (!student) return null;
 
+  const toastOpen = Boolean(successMessage) || Boolean(error);
+  const toastMessage = successMessage || error || "";
+  const toastVariant = successMessage ? "success" : "error";
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-      <Link href="/" className="mb-6 inline-block text-sm font-medium text-teal-700 hover:underline">
+      <Toast
+        open={toastOpen}
+        message={toastMessage}
+        variant={toastVariant}
+        onClose={dismissToast}
+      />
+
+      <Link
+        href="/"
+        className="mb-6 inline-block text-sm font-medium text-teal-700 hover:underline"
+      >
         ← Back to students
       </Link>
-
-      {successMessage ? (
-        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {successMessage}
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-      ) : null}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
