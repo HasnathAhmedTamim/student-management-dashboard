@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { DeleteConfirmModal } from "@/components/students/DeleteConfirmModal";
@@ -149,12 +148,6 @@ export function StudentsDashboard() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link
-            href="/docs"
-            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            API Docs
-          </Link>
           <LogoutButton />
           <button
             type="button"

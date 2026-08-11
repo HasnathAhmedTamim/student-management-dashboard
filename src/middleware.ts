@@ -9,12 +9,8 @@ export function middleware(request: NextRequest) {
 
   const isLoginPage = pathname === "/login";
   const isAuthApi = pathname.startsWith("/api/auth");
-  const isOpenApi =
-    pathname === "/api/openapi" ||
-    pathname === "/openapi.json" ||
-    pathname === "/docs";
 
-  if (isAuthApi || isOpenApi) {
+  if (isAuthApi) {
     return NextResponse.next();
   }
 
