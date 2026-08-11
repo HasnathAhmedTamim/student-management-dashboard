@@ -1,10 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { LogoutButton } from "@/components/auth/LogoutButton";
 import { DeleteConfirmModal } from "@/components/students/DeleteConfirmModal";
 import { EmptyState } from "@/components/students/EmptyState";
 import { ErrorState } from "@/components/students/ErrorState";
 import { LoadingState } from "@/components/students/LoadingState";
+import { Pagination } from "@/components/students/Pagination";
 import { StudentFiltersBar } from "@/components/students/StudentFilters";
 import { StudentForm } from "@/components/students/StudentForm";
 import { StudentTable } from "@/components/students/StudentTable";
@@ -14,6 +17,7 @@ import {
   createStudent,
   deleteStudent,
   fetchStudents,
+  setPage,
   updateStudent,
 } from "@/store/studentsSlice";
 import type { Student, StudentInput } from "@/types/student";
@@ -22,9 +26,8 @@ type PanelMode = "closed" | "create" | "edit";
 
 export function StudentsDashboard() {
   const dispatch = useAppDispatch();
-  const { items, loading, saving, error, successMessage } = useAppSelector(
-    (state) => state.students,
-  );
+  const { items, meta, loading, saving, error, successMessage, filters } =
+    useAppSelector((state) => state.students);
 
   const [panelMode, setPanelMode] = useState<PanelMode>("closed");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -73,6 +76,7 @@ export function StudentsDashboard() {
     const result = await dispatch(createStudent(values));
     if (createStudent.fulfilled.match(result)) {
       closePanel();
+      loadStudents();
       return true;
     }
 
@@ -112,7 +116,18 @@ export function StudentsDashboard() {
     const result = await dispatch(deleteStudent(studentToDelete.id));
     if (deleteStudent.fulfilled.match(result)) {
       setStudentToDelete(null);
+
+      const remainingOnPage = items.length - 1;
+      if (remainingOnPage === 0 && filters.page > 1) {
+        dispatch(setPage(filters.page - 1));
+      }
+      loadStudents();
     }
+  }
+
+  function handlePageChange(page: number) {
+    dispatch(setPage(page));
+    void dispatch(fetchStudents());
   }
 
   const showTable = !loading && !error && items.length > 0;
@@ -129,17 +144,26 @@ export function StudentsDashboard() {
             Student Management
           </h1>
           <p className="mt-2 max-w-2xl text-slate-600">
-            View, search, filter, add, edit, and delete students from one
+            View, search, filter, sort, add, edit, and delete students from one
             dashboard.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreate}
-          className="rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-800"
-        >
-          Add Student
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href="/docs"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            API Docs
+          </Link>
+          <LogoutButton />
+          <button
+            type="button"
+            onClick={openCreate}
+            className="rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-800"
+          >
+            Add Student
+          </button>
+        </div>
       </header>
 
       {successMessage ? (
@@ -164,11 +188,20 @@ export function StudentsDashboard() {
       ) : null}
       {showEmpty ? <EmptyState /> : null}
       {showTable ? (
-        <StudentTable
-          students={items}
-          onEdit={openEdit}
-          onDelete={setStudentToDelete}
-        />
+        <>
+          <StudentTable
+            students={items}
+            onEdit={openEdit}
+            onDelete={setStudentToDelete}
+          />
+          <Pagination
+            page={meta.page}
+            totalPages={meta.totalPages}
+            total={meta.total}
+            disabled={loading || saving}
+            onPageChange={handlePageChange}
+          />
+        </>
       ) : null}
 
       {panelMode !== "closed" ? (
