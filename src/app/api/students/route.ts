@@ -6,12 +6,28 @@ import {
   studentInputSchema,
 } from "@/lib/validations/student";
 
+const SORT_FIELDS = ["name", "class", "createdAt"] as const;
+type SortField = (typeof SORT_FIELDS)[number];
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search")?.trim() ?? "";
     const status = searchParams.get("status")?.trim() ?? "";
     const className = searchParams.get("class")?.trim() ?? "";
+    const sortByParam = searchParams.get("sortBy")?.trim() ?? "createdAt";
+    const sortOrderParam = searchParams.get("sortOrder")?.trim() ?? "desc";
+
+    const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+    const limit = Math.min(
+      50,
+      Math.max(1, Number(searchParams.get("limit") ?? "5") || 5),
+    );
+
+    const sortBy: SortField = SORT_FIELDS.includes(sortByParam as SortField)
+      ? (sortByParam as SortField)
+      : "createdAt";
+    const sortOrder = sortOrderParam === "asc" ? "asc" : "desc";
 
     const where: Prisma.StudentWhereInput = {};
 
@@ -30,12 +46,27 @@ export async function GET(request: Request) {
       where.class = { equals: className, mode: "insensitive" };
     }
 
-    const students = await prisma.student.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-    });
+    const [total, students] = await Promise.all([
+      prisma.student.count({ where }),
+      prisma.student.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+    ]);
 
-    return jsonOk(students.map(toStudentDto));
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    return jsonOk({
+      data: students.map(toStudentDto),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages,
+      },
+    });
   } catch (error) {
     console.error("GET /api/students failed:", error);
     return jsonError("Unable to load students. Please try again.", 500);

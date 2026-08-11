@@ -1,13 +1,18 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type {
+  PaginationMeta,
+  SortOrder,
   Student,
   StudentFilters,
   StudentInput,
+  StudentSortBy,
+  StudentsListResponse,
   StudentStatus,
 } from "@/types/student";
 
 interface StudentsState {
   items: Student[];
+  meta: PaginationMeta;
   loading: boolean;
   saving: boolean;
   error: string | null;
@@ -17,6 +22,12 @@ interface StudentsState {
 
 const initialState: StudentsState = {
   items: [],
+  meta: {
+    page: 1,
+    limit: 5,
+    total: 0,
+    totalPages: 1,
+  },
   loading: false,
   saving: false,
   error: null,
@@ -25,6 +36,10 @@ const initialState: StudentsState = {
     search: "",
     status: "",
     className: "",
+    sortBy: "createdAt",
+    sortOrder: "desc",
+    page: 1,
+    limit: 5,
   },
 };
 
@@ -41,8 +56,12 @@ function buildQuery(filters: StudentFilters) {
     params.set("class", filters.className.trim());
   }
 
-  const query = params.toString();
-  return query ? `?${query}` : "";
+  params.set("sortBy", filters.sortBy);
+  params.set("sortOrder", filters.sortOrder);
+  params.set("page", String(filters.page));
+  params.set("limit", String(filters.limit));
+
+  return `?${params.toString()}`;
 }
 
 async function readErrorMessage(response: Response, fallback: string) {
@@ -58,7 +77,9 @@ export const fetchStudents = createAsyncThunk(
   "students/fetchStudents",
   async (_, { getState, rejectWithValue }) => {
     const state = getState() as { students: StudentsState };
-    const response = await fetch(`/api/students${buildQuery(state.students.filters)}`);
+    const response = await fetch(
+      `/api/students${buildQuery(state.students.filters)}`,
+    );
 
     if (!response.ok) {
       return rejectWithValue(
@@ -69,7 +90,7 @@ export const fetchStudents = createAsyncThunk(
       );
     }
 
-    return (await response.json()) as Student[];
+    return (await response.json()) as StudentsListResponse;
   },
 );
 
@@ -142,12 +163,26 @@ const studentsSlice = createSlice({
   reducers: {
     setSearch(state, action: PayloadAction<string>) {
       state.filters.search = action.payload;
+      state.filters.page = 1;
     },
     setStatusFilter(state, action: PayloadAction<"" | StudentStatus>) {
       state.filters.status = action.payload;
+      state.filters.page = 1;
     },
     setClassFilter(state, action: PayloadAction<string>) {
       state.filters.className = action.payload;
+      state.filters.page = 1;
+    },
+    setSort(
+      state,
+      action: PayloadAction<{ sortBy: StudentSortBy; sortOrder: SortOrder }>,
+    ) {
+      state.filters.sortBy = action.payload.sortBy;
+      state.filters.sortOrder = action.payload.sortOrder;
+      state.filters.page = 1;
+    },
+    setPage(state, action: PayloadAction<number>) {
+      state.filters.page = Math.max(1, action.payload);
     },
     clearMessages(state) {
       state.error = null;
@@ -162,7 +197,9 @@ const studentsSlice = createSlice({
       })
       .addCase(fetchStudents.fulfilled, (state, action) => {
         state.loading = false;
-        state.items = action.payload;
+        state.items = action.payload.data;
+        state.meta = action.payload.meta;
+        state.filters.page = action.payload.meta.page;
       })
       .addCase(fetchStudents.rejected, (state, action) => {
         state.loading = false;
@@ -176,9 +213,9 @@ const studentsSlice = createSlice({
         state.error = null;
         state.successMessage = null;
       })
-      .addCase(createStudent.fulfilled, (state, action) => {
+      .addCase(createStudent.fulfilled, (state) => {
         state.saving = false;
-        state.items = [action.payload, ...state.items];
+        state.filters.page = 1;
         state.successMessage = "Student created successfully.";
       })
       .addCase(createStudent.rejected, (state, action) => {
@@ -208,11 +245,8 @@ const studentsSlice = createSlice({
         state.error = null;
         state.successMessage = null;
       })
-      .addCase(deleteStudent.fulfilled, (state, action) => {
+      .addCase(deleteStudent.fulfilled, (state) => {
         state.saving = false;
-        state.items = state.items.filter(
-          (student) => student.id !== action.payload,
-        );
         state.successMessage = "Student deleted successfully.";
       })
       .addCase(deleteStudent.rejected, (state, action) => {
@@ -227,6 +261,8 @@ export const {
   setSearch,
   setStatusFilter,
   setClassFilter,
+  setSort,
+  setPage,
   clearMessages,
 } = studentsSlice.actions;
 
