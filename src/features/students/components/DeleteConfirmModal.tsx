@@ -21,6 +21,7 @@ export function DeleteConfirmModal({
     <Modal
       open={open}
       title="Delete student"
+      onClose={loading ? undefined : onCancel}
       overlayClassName="z-50 flex items-center justify-center bg-slate-900/50 p-4"
       cardClassName="max-w-md"
       footer={
