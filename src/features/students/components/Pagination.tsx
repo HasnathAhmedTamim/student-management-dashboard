@@ -20,7 +20,7 @@ export function Pagination({
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
 
   return (
-    <div className="mt-4 flex flex-col items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 sm:flex-row">
+    <div className="mt-4 flex flex-col items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 sm:flex-row">
       <p className="text-sm text-slate-600">
         Page <span className="font-medium text-slate-900">{page}</span> of{" "}
         <span className="font-medium text-slate-900">{totalPages}</span>
@@ -33,7 +33,7 @@ export function Pagination({
           type="button"
           disabled={disabled || page <= 1}
           onClick={() => onPageChange(page - 1)}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Previous
         </button>
@@ -46,8 +46,8 @@ export function Pagination({
             onClick={() => onPageChange(pageNumber)}
             className={`min-w-9 rounded-lg px-2.5 py-1.5 text-sm font-medium ${
               pageNumber === page
-                ? "bg-teal-700 text-white"
-                : "border border-slate-300 text-slate-700 hover:bg-slate-50"
+                ? "border border-teal-700 bg-white text-teal-700"
+                : "border border-slate-300 bg-white text-slate-700"
             } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             {pageNumber}
@@ -58,7 +58,7 @@ export function Pagination({
           type="button"
           disabled={disabled || page >= totalPages}
           onClick={() => onPageChange(page + 1)}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Next
         </button>

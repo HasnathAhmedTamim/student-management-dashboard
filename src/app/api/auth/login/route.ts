@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { AUTH_COOKIE, createSessionToken, getAuthCredentials } from "@/lib/auth";
+import { AUTH_MESSAGES } from "@/lib/messages";
 
 export async function POST(request: Request) {
   try {
@@ -17,12 +18,12 @@ export async function POST(request: Request) {
       body.password !== password
     ) {
       return NextResponse.json(
-        { message: "Invalid username or password." },
+        { message: AUTH_MESSAGES.invalidCredentials },
         { status: 401 },
       );
     }
 
-    const response = NextResponse.json({ message: "Logged in successfully." });
+    const response = NextResponse.json({ message: AUTH_MESSAGES.loggedIn });
     response.cookies.set(AUTH_COOKIE, createSessionToken(), {
       httpOnly: true,
       sameSite: "lax",
@@ -34,7 +35,7 @@ export async function POST(request: Request) {
     return response;
   } catch {
     return NextResponse.json(
-      { message: "Unable to log in. Please try again." },
+      { message: AUTH_MESSAGES.loginFailed },
       { status: 500 },
     );
   }

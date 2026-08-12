@@ -1,12 +1,14 @@
 "use client";
 
+import { STUDENT_MESSAGES } from "@/lib/messages";
+
 interface ErrorStateProps {
   message?: string;
   onRetry?: () => void;
 }
 
 export function ErrorState({
-  message = "Unable to load students. Please try again.",
+  message = STUDENT_MESSAGES.listFailed,
   onRetry,
 }: ErrorStateProps) {
   return (

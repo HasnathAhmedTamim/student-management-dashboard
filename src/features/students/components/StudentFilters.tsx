@@ -6,15 +6,15 @@ import {
   setSearch,
   setSort,
   setStatusFilter,
-} from "@/store/studentsSlice";
+} from "@/features/students/store/studentsSlice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import type { StudentSortBy, StudentStatus } from "@/types/student";
+import type { StudentSortBy, StudentStatus } from "@/features/students/types/student";
 
 interface StudentFiltersProps {
   onFilterChange: () => void;
 }
 
-export function StudentFiltersBar({ onFilterChange }: StudentFiltersProps) {
+export function StudentFilters({ onFilterChange }: StudentFiltersProps) {
   const dispatch = useAppDispatch();
   const filters = useAppSelector((state) => state.students.filters);
   const [localSearch, setLocalSearch] = useState(filters.search);
@@ -25,13 +25,13 @@ export function StudentFiltersBar({ onFilterChange }: StudentFiltersProps) {
         dispatch(setSearch(localSearch));
         onFilterChange();
       }
-    }, 350);
+    }, 750);
 
     return () => clearTimeout(timer);
   }, [localSearch, filters.search, dispatch, onFilterChange]);
 
   return (
-    <div className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-2 lg:grid-cols-4">
       <div>
         <label htmlFor="search" className="mb-1 block text-sm font-medium text-slate-700">
           Search
@@ -41,7 +41,7 @@ export function StudentFiltersBar({ onFilterChange }: StudentFiltersProps) {
           value={localSearch}
           onChange={(e) => setLocalSearch(e.target.value)}
           placeholder="Search by name or email"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400"
         />
       </div>
 
@@ -56,7 +56,7 @@ export function StudentFiltersBar({ onFilterChange }: StudentFiltersProps) {
             dispatch(setStatusFilter(e.target.value as "" | StudentStatus));
             onFilterChange();
           }}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400"
         >
           <option value="">All statuses</option>
           <option value="ACTIVE">Active</option>
@@ -76,7 +76,7 @@ export function StudentFiltersBar({ onFilterChange }: StudentFiltersProps) {
             onFilterChange();
           }}
           placeholder="e.g. Grade 10"
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400"
         />
       </div>
 
@@ -95,7 +95,7 @@ export function StudentFiltersBar({ onFilterChange }: StudentFiltersProps) {
             dispatch(setSort({ sortBy, sortOrder }));
             onFilterChange();
           }}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-100"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-400"
         >
           <option value="createdAt:desc">Newest first</option>
           <option value="createdAt:asc">Oldest first</option>

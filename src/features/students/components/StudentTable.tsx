@@ -1,28 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import type { Student } from "@/types/student";
+import type { Student } from "@/features/students/types/student";
+import { StudentActions } from "@/features/students/components/StudentActions";
+import { StatusBadge } from "@/features/students/components/StatusBadge";
 
 interface StudentTableProps {
   students: Student[];
   onEdit: (student: Student) => void;
   onDelete: (student: Student) => void;
-}
-
-function StatusBadge({ status }: { status: Student["status"] }) {
-  const isActive = status === "ACTIVE";
-
-  return (
-    <span
-      className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-        isActive
-          ? "bg-emerald-100 text-emerald-800"
-          : "bg-slate-200 text-slate-700"
-      }`}
-    >
-      {isActive ? "Active" : "Inactive"}
-    </span>
-  );
 }
 
 export function StudentTable({
@@ -32,7 +18,7 @@ export function StudentTable({
 }: StudentTableProps) {
   return (
     <>
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white md:block">
+      <div className="hidden overflow-hidden rounded-lg border border-slate-200 bg-white md:block">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
             <thead className="bg-slate-50 text-slate-600">
@@ -47,11 +33,11 @@ export function StudentTable({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {students.map((student) => (
-                <tr key={student.id} className="hover:bg-slate-50/80">
+                <tr key={student.id} className="hover:bg-slate-50/50">
                   <td className="px-4 py-3 font-medium text-slate-900">
                     <Link
                       href={`/students/${student.id}`}
-                      className="hover:text-teal-700 hover:underline"
+                      className="hover:underline"
                     >
                       {student.name}
                     </Link>
@@ -63,28 +49,12 @@ export function StudentTable({
                     <StatusBadge status={student.status} />
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <Link
-                        href={`/students/${student.id}`}
-                        className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-white"
-                      >
-                        View
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => onEdit(student)}
-                        className="rounded-md border border-slate-300 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-white"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(student)}
-                        className="rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <StudentActions
+                      student={student}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      variant="desktop"
+                    />
                   </td>
                 </tr>
               ))}
@@ -97,13 +67,13 @@ export function StudentTable({
         {students.map((student) => (
           <article
             key={student.id}
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+            className="rounded-lg border border-slate-200 bg-white p-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
                 <Link
                   href={`/students/${student.id}`}
-                  className="font-semibold text-slate-900 hover:text-teal-700"
+                  className="font-semibold text-slate-900 hover:underline"
                 >
                   {student.name}
                 </Link>
@@ -121,28 +91,12 @@ export function StudentTable({
                 <dd className="text-slate-800">{student.class}</dd>
               </div>
             </dl>
-            <div className="mt-4 flex gap-2">
-              <Link
-                href={`/students/${student.id}`}
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-medium text-slate-700"
-              >
-                View
-              </Link>
-              <button
-                type="button"
-                onClick={() => onEdit(student)}
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700"
-              >
-                Edit
-              </button>
-              <button
-                type="button"
-                onClick={() => onDelete(student)}
-                className="flex-1 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700"
-              >
-                Delete
-              </button>
-            </div>
+            <StudentActions
+              student={student}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              variant="mobile"
+            />
           </article>
         ))}
       </div>

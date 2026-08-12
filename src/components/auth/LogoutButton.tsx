@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { setFlashToast } from "@/lib/flashToast";
+import { setFlashToast } from "@/lib/utils";
+import { AUTH_MESSAGES } from "@/lib/messages";
 
 export function LogoutButton() {
   const router = useRouter();
@@ -16,19 +17,19 @@ export function LogoutButton() {
       const response = await fetch("/api/auth/logout", { method: "POST" });
 
       if (!response.ok) {
-        toast.error("Unable to log out. Please try again.");
+        toast.error(AUTH_MESSAGES.logoutFailed);
         return;
       }
 
-      toast.success("Logged out successfully.");
-      setFlashToast("Logged out successfully.", "success");
+      toast.success(AUTH_MESSAGES.loggedOut);
+      setFlashToast(AUTH_MESSAGES.loggedOut, "success");
 
       window.setTimeout(() => {
         router.replace("/login");
         router.refresh();
       }, 500);
     } catch {
-      toast.error("Unable to log out. Please try again.");
+      toast.error(AUTH_MESSAGES.logoutFailed);
     } finally {
       setLoading(false);
     }

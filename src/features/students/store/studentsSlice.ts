@@ -1,4 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import * as studentsApi from "@/features/students/services/students.api";
+import type { ApiErrorPayload } from "@/features/students/services/students.api";
+import { STUDENT_MESSAGES } from "@/lib/messages";
 import type {
   PaginationMeta,
   SortOrder,
@@ -6,11 +9,10 @@ import type {
   StudentFilters,
   StudentInput,
   StudentSortBy,
-  StudentsListResponse,
   StudentStatus,
-} from "@/types/student";
+} from "@/features/students/types/student";
 
-interface StudentsState {
+export interface StudentsState {
   items: Student[];
   meta: PaginationMeta;
   loading: boolean;
@@ -43,74 +45,27 @@ const initialState: StudentsState = {
   },
 };
 
-function buildQuery(filters: StudentFilters) {
-  const params = new URLSearchParams();
-
-  if (filters.search.trim()) {
-    params.set("search", filters.search.trim());
-  }
-  if (filters.status) {
-    params.set("status", filters.status);
-  }
-  if (filters.className.trim()) {
-    params.set("class", filters.className.trim());
-  }
-
-  params.set("sortBy", filters.sortBy);
-  params.set("sortOrder", filters.sortOrder);
-  params.set("page", String(filters.page));
-  params.set("limit", String(filters.limit));
-
-  return `?${params.toString()}`;
-}
-
-async function readErrorMessage(response: Response, fallback: string) {
-  try {
-    const data = (await response.json()) as { message?: string };
-    return data.message ?? fallback;
-  } catch {
-    return fallback;
-  }
-}
-
+// Thunks only orchestrate: the HTTP work lives in services/students.api.ts.
 export const fetchStudents = createAsyncThunk(
   "students/fetchStudents",
   async (_, { getState, rejectWithValue }) => {
     const state = getState() as { students: StudentsState };
-    const response = await fetch(
-      `/api/students${buildQuery(state.students.filters)}`,
-    );
+    const result = await studentsApi.listStudents(state.students.filters);
 
-    if (!response.ok) {
-      return rejectWithValue(
-        await readErrorMessage(
-          response,
-          "Unable to load students. Please try again.",
-        ),
-      );
-    }
+    if (!result.ok) return rejectWithValue(result.error);
 
-    return (await response.json()) as StudentsListResponse;
+    return result.data;
   },
 );
 
 export const createStudent = createAsyncThunk(
   "students/createStudent",
   async (payload: StudentInput, { rejectWithValue }) => {
-    const response = await fetch("/api/students", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    const result = await studentsApi.createStudent(payload);
 
-    if (!response.ok) {
-      const data = await response.json().catch(() => null);
-      return rejectWithValue(
-        data ?? { message: "Unable to create student. Please try again." },
-      );
-    }
+    if (!result.ok) return rejectWithValue(result.error);
 
-    return (await response.json()) as Student;
+    return result.data;
   },
 );
 
@@ -120,38 +75,20 @@ export const updateStudent = createAsyncThunk(
     { id, data }: { id: string; data: StudentInput },
     { rejectWithValue },
   ) => {
-    const response = await fetch(`/api/students/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    const result = await studentsApi.updateStudent(id, data);
 
-    if (!response.ok) {
-      const errorBody = await response.json().catch(() => null);
-      return rejectWithValue(
-        errorBody ?? { message: "Unable to update student. Please try again." },
-      );
-    }
+    if (!result.ok) return rejectWithValue(result.error);
 
-    return (await response.json()) as Student;
+    return result.data;
   },
 );
 
 export const deleteStudent = createAsyncThunk(
   "students/deleteStudent",
   async (id: string, { rejectWithValue }) => {
-    const response = await fetch(`/api/students/${id}`, {
-      method: "DELETE",
-    });
+    const result = await studentsApi.deleteStudent(id);
 
-    if (!response.ok) {
-      return rejectWithValue(
-        await readErrorMessage(
-          response,
-          "Unable to delete student. Please try again.",
-        ),
-      );
-    }
+    if (!result.ok) return rejectWithValue(result.error);
 
     return id;
   },
@@ -190,6 +127,9 @@ const studentsSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    const readError = (payload: unknown, fallback: string) =>
+      (payload as ApiErrorPayload | undefined)?.message || fallback;
+
     builder
       .addCase(fetchStudents.pending, (state) => {
         state.loading = true;
@@ -203,10 +143,7 @@ const studentsSlice = createSlice({
       })
       .addCase(fetchStudents.rejected, (state, action) => {
         state.loading = false;
-        state.error =
-          (action.payload as string) ||
-          action.error.message ||
-          "Unable to load students. Please try again.";
+        state.error = readError(action.payload, STUDENT_MESSAGES.listFailed);
       })
       .addCase(createStudent.pending, (state) => {
         state.saving = true;
@@ -216,12 +153,11 @@ const studentsSlice = createSlice({
       .addCase(createStudent.fulfilled, (state) => {
         state.saving = false;
         state.filters.page = 1;
-        state.successMessage = "Student created successfully.";
+        state.successMessage = STUDENT_MESSAGES.created;
       })
       .addCase(createStudent.rejected, (state, action) => {
         state.saving = false;
-        const payload = action.payload as { message?: string } | undefined;
-        state.error = payload?.message || "Unable to create student.";
+        state.error = readError(action.payload, STUDENT_MESSAGES.createFailed);
       })
       .addCase(updateStudent.pending, (state) => {
         state.saving = true;
@@ -233,12 +169,11 @@ const studentsSlice = createSlice({
         state.items = state.items.map((student) =>
           student.id === action.payload.id ? action.payload : student,
         );
-        state.successMessage = "Student updated successfully.";
+        state.successMessage = STUDENT_MESSAGES.updated;
       })
       .addCase(updateStudent.rejected, (state, action) => {
         state.saving = false;
-        const payload = action.payload as { message?: string } | undefined;
-        state.error = payload?.message || "Unable to update student.";
+        state.error = readError(action.payload, STUDENT_MESSAGES.updateFailed);
       })
       .addCase(deleteStudent.pending, (state) => {
         state.saving = true;
@@ -247,12 +182,11 @@ const studentsSlice = createSlice({
       })
       .addCase(deleteStudent.fulfilled, (state) => {
         state.saving = false;
-        state.successMessage = "Student deleted successfully.";
+        state.successMessage = STUDENT_MESSAGES.deleted;
       })
       .addCase(deleteStudent.rejected, (state, action) => {
         state.saving = false;
-        state.error =
-          (action.payload as string) || "Unable to delete student.";
+        state.error = readError(action.payload, STUDENT_MESSAGES.deleteFailed);
       });
   },
 });

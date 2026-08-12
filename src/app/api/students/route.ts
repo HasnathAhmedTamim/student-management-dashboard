@@ -1,10 +1,12 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { jsonError, jsonOk, toStudentDto } from "@/lib/api";
+import { jsonError, jsonOk } from "@/lib/apiResponse";
+import { STUDENT_MESSAGES } from "@/lib/messages";
+import { toStudentDto } from "@/features/students/services/students.mapper";
 import {
   formatZodErrors,
   studentInputSchema,
-} from "@/lib/validations/student";
+} from "@/features/students/validations/student.schema";
 
 const SORT_FIELDS = ["name", "class", "createdAt"] as const;
 type SortField = (typeof SORT_FIELDS)[number];
@@ -69,17 +71,22 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("GET /api/students failed:", error);
-    return jsonError("Unable to load students. Please try again.", 500);
+    return jsonError(STUDENT_MESSAGES.listFailed, 500);
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // A malformed body must fail validation (400), not crash the handler (500).
+    const body = await request.json().catch(() => null);
     const parsed = studentInputSchema.safeParse(body);
 
     if (!parsed.success) {
-      return jsonError("Invalid request.", 400, formatZodErrors(parsed.error));
+      return jsonError(
+        STUDENT_MESSAGES.invalidRequest,
+        400,
+        formatZodErrors(parsed.error),
+      );
     }
 
     const student = await prisma.student.create({
@@ -92,12 +99,12 @@ export async function POST(request: Request) {
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      return jsonError("A student with this email already exists.", 400, {
-        email: "A student with this email already exists.",
+      return jsonError(STUDENT_MESSAGES.duplicateEmail, 400, {
+        email: STUDENT_MESSAGES.duplicateEmail,
       });
     }
 
     console.error("POST /api/students failed:", error);
-    return jsonError("Unable to create student. Please try again.", 500);
+    return jsonError(STUDENT_MESSAGES.createFailed, 500);
   }
 }

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { AUTH_COOKIE } from "@/lib/auth";
+import { AUTH_MESSAGES } from "@/lib/messages";
 
 export async function POST() {
-  const response = NextResponse.json({ message: "Logged out successfully." });
+  const response = NextResponse.json({ message: AUTH_MESSAGES.loggedOut });
   response.cookies.set(AUTH_COOKIE, "", {
     httpOnly: true,
     sameSite: "lax",

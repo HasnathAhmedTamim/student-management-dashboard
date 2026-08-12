@@ -1,11 +1,9 @@
 import { configureStore } from "@reduxjs/toolkit";
-import studentsReducer from "./studentsSlice";
+import { rootReducer } from "./rootReducer";
 
 export const makeStore = () =>
   configureStore({
-    reducer: {
-      students: studentsReducer,
-    },
+    reducer: rootReducer,
   });
 
 export type AppStore = ReturnType<typeof makeStore>;

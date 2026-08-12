@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import type { Student, StudentInput, StudentStatus } from "@/types/student";
+import { useMemo, useState } from "react";
+import type { Student, StudentInput, StudentStatus } from "@/features/students/types/student";
 import {
   formatZodErrors,
   studentInputSchema,
-} from "@/lib/validations/student";
+} from "@/features/students/validations/student.schema";
 
 interface StudentFormProps {
   mode: "create" | "edit";
@@ -44,25 +44,25 @@ export function StudentForm({
   }, [initialValues]);
 
   const [values, setValues] = useState<StudentInput>(defaults);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
+  const [editedFields, setEditedFields] = useState<Record<string, true>>({});
 
-  useEffect(() => {
-    setValues(defaults);
-    setErrors({});
-  }, [defaults]);
-
-  useEffect(() => {
-    if (serverErrors) {
-      setErrors(serverErrors);
+  // Server errors stay in props; a field's error disappears once the user edits it.
+  const errors = useMemo(() => {
+    const merged: Record<string, string> = { ...serverErrors, ...localErrors };
+    for (const key of Object.keys(editedFields)) {
+      delete merged[key];
     }
-  }, [serverErrors]);
+    return merged;
+  }, [serverErrors, localErrors, editedFields]);
 
   function updateField<K extends keyof StudentInput>(
     key: K,
     value: StudentInput[K],
   ) {
     setValues((prev) => ({ ...prev, [key]: value }));
-    setErrors((prev) => {
+    setEditedFields((prev) => ({ ...prev, [key]: true }));
+    setLocalErrors((prev) => {
       const next = { ...prev };
       delete next[key];
       return next;
@@ -82,14 +82,17 @@ export function StudentForm({
 
     const parsed = studentInputSchema.safeParse(values);
     if (!parsed.success) {
-      setErrors(formatZodErrors(parsed.error));
+      setLocalErrors(formatZodErrors(parsed.error));
+      setEditedFields({});
       return;
     }
+
+    setLocalErrors({});
+    setEditedFields({});
 
     const ok = await onSubmit(parsed.data);
     if (ok && mode === "create") {
       setValues(emptyValues);
-      setErrors({});
     }
   }
 

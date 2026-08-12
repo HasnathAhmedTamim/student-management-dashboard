@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Source_Sans_3 } from "next/font/google";
-import { AppToaster } from "@/components/ui/AppToaster";
-import { StoreProvider } from "@/store/provider";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const sourceSans = Source_Sans_3({
@@ -30,10 +29,9 @@ export default function RootLayout({
       <body
         className={`${sourceSans.variable} ${fraunces.variable} min-h-screen antialiased`}
       >
-        <StoreProvider>
+        <Providers>
           <main className="min-h-screen">{children}</main>
-          <AppToaster />
-        </StoreProvider>
+        </Providers>
       </body>
     </html>
   );

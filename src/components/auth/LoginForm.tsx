@@ -3,7 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { consumeFlashToast } from "@/lib/flashToast";
+import { consumeFlashToast } from "@/lib/utils";
+import { AUTH_MESSAGES } from "@/lib/messages";
 
 export function LoginForm() {
   const router = useRouter();
@@ -41,17 +42,17 @@ export function LoginForm() {
       const body = await response.json().catch(() => null);
 
       if (!response.ok) {
-        toast.error(body?.message || "Invalid username or password.");
+        toast.error(body?.message || AUTH_MESSAGES.invalidCredentials);
         return;
       }
 
-      toast.success("Logged in successfully.");
+      toast.success(AUTH_MESSAGES.loggedIn);
       window.setTimeout(() => {
         router.replace(nextPath);
         router.refresh();
       }, 500);
     } catch {
-      toast.error("Unable to log in. Please try again.");
+      toast.error(AUTH_MESSAGES.loginFailed);
     } finally {
       setLoading(false);
     }

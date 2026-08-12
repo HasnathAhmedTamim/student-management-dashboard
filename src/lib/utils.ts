@@ -1,4 +1,8 @@
-export const FLASH_TOAST_KEY = "eduayna_flash_toast";
+/**
+ * A "flash toast" is a message stored before a redirect (e.g. logout) and shown
+ * on the next page, since toasts do not survive a navigation.
+ */
+const FLASH_TOAST_KEY = "eduayna_flash_toast";
 
 export type FlashToast = {
   message: string;
